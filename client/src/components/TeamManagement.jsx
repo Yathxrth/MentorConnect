@@ -1,44 +1,309 @@
-import React from "react";
+import { useState } from 'react';
+import { Users, Copy, Check } from 'lucide-react';
 
-const TeamManagement = () => {
-  return (
-    <>
-      <section className="relative z-10 bg-primary py-[120px]">
-        <div className="container mx-auto">
-          <div className="-mx-4 flex">
-            <div className="w-full px-4">
-              <div className="mx-auto max-w-[400px] text-center">
-                <h2 className="mb-2 text-[50px] font-bold leading-none text-white sm:text-[80px] md:text-[100px]">
-                  404
-                </h2>
-                <h4 className="mb-3 text-[22px] font-semibold leading-tight text-white">
-                  Oops! That page can’t be found
-                </h4>
-                <p className="mb-8 text-lg text-white">
-                  The page you are looking for it maybe deleted
-                </p>
-                <a
-                  href="javascript:void(0)"
-                  className="inline-block rounded-lg border border-white px-8 py-3 text-center text-base font-semibold text-white transition hover:bg-white hover:text-primary"
-                >
-                  Go To Home
-                </a>
+// Team Management Component - Create or join teams
+function TeamManagement({ setCurrentPage }) {
+  // State for current view
+  const [view, setView] = useState('selection'); // 'selection', 'create', 'join', 'team'
+  
+  // State for team code
+  const [teamCode, setTeamCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [copied, setCopied] = useState(false);
+  
+  // State for team name
+  const [teamName, setTeamName] = useState('');
+
+  // Mock current team data
+  const [currentTeam, setCurrentTeam] = useState(null);
+
+  // Mock team members
+  const teamMembers = [
+    { id: 1, name: 'John Doe', role: 'Leader', email: 'john@college.edu' },
+    { id: 2, name: 'Jane Smith', role: 'Member', email: 'jane@college.edu' },
+    { id: 3, name: 'Mike Johnson', role: 'Member', email: 'mike@college.edu' }
+  ];
+
+  // Generate random team code
+  const generateTeamCode = () => {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return code;
+  };
+
+  // Handle create team
+  const handleCreateTeam = () => {
+    if (!teamName.trim()) {
+      alert('Please enter a team name');
+      return;
+    }
+
+    const code = generateTeamCode();
+    setGeneratedCode(code);
+    
+    // Here you would send data to backend
+    console.log('Creating team:', { name: teamName, code: code });
+    
+    // Set current team
+    setCurrentTeam({
+      name: teamName,
+      code: code,
+      role: 'Leader'
+    });
+    
+    setView('team');
+  };
+
+  // Handle join team
+  const handleJoinTeam = () => {
+    if (!teamCode.trim()) {
+      alert('Please enter a team code');
+      return;
+    }
+
+    // Here you would verify code with backend
+    console.log('Joining team with code:', teamCode);
+    
+    // Mock joining team
+    setCurrentTeam({
+      name: 'Awesome Team',
+      code: teamCode,
+      role: 'Member'
+    });
+    
+    alert('Successfully joined the team!');
+    setView('team');
+  };
+
+  // Copy team code to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedCode || currentTeam?.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Leave team
+  const handleLeaveTeam = () => {
+    if (window.confirm('Are you sure you want to leave this team?')) {
+      setCurrentTeam(null);
+      setView('selection');
+      setTeamCode('');
+      setTeamName('');
+      setGeneratedCode('');
+    }
+  };
+
+  // Render team selection view
+  if (view === 'selection') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Team Management</h1>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            
+            {/* Create Team Card */}
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center hover:shadow-md transition-shadow">
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="text-white" size={32} />
               </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">Create Team</h2>
+              <p className="text-gray-600 mb-6">
+                Start a new team and invite others to join using a team code
+              </p>
+              <button
+                onClick={() => setView('create')}
+                className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 w-full"
+              >
+                Create New Team
+              </button>
+            </div>
+
+            {/* Join Team Card */}
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center hover:shadow-md transition-shadow">
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="text-white" size={32} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">Join Team</h2>
+              <p className="text-gray-600 mb-6">
+                Join an existing team using the code shared by your team leader
+              </p>
+              <button
+                onClick={() => setView('join')}
+                className="px-6 py-3 bg-white text-gray-800 border-2 border-gray-800 rounded-lg hover:bg-gray-100 w-full"
+              >
+                Join Existing Team
+              </button>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        <div className="absolute left-0 top-0 -z-10 flex h-full w-full items-center justify-between space-x-5 md:space-x-8 lg:space-x-14">
-          <div className="h-full w-1/3 bg-gradient-to-t from-[#FFFFFF14] to-[#C4C4C400]"></div>
-          <div className="flex h-full w-1/3">
-            <div className="h-full w-1/2 bg-gradient-to-b from-[#FFFFFF14] to-[#C4C4C400]"></div>
-            <div className="h-full w-1/2 bg-gradient-to-t from-[#FFFFFF14] to-[#C4C4C400]"></div>
+  // Render create team view
+  if (view === 'create') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Create New Team</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Team Name
+                </label>
+                <input
+                  type="text"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  placeholder="Enter team name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+                />
+              </div>
+
+              <button
+                onClick={handleCreateTeam}
+                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+              >
+                Create Team
+              </button>
+
+              <button
+                onClick={() => setView('selection')}
+                className="w-full py-3 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100"
+              >
+                Back
+              </button>
+            </div>
           </div>
-          <div className="h-full w-1/3 bg-gradient-to-b from-[#FFFFFF14] to-[#C4C4C400]"></div>
         </div>
-      </section>
-    </>
-  );
-};
+      </div>
+    );
+  }
+
+  // Render join team view
+  if (view === 'join') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Join Team</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Team Code
+                </label>
+                <input
+                  type="text"
+                  value={teamCode}
+                  onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
+                  placeholder="Enter 6-digit code"
+                  maxLength={6}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800 uppercase"
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  Ask your team leader for the team code
+                </p>
+              </div>
+
+              <button
+                onClick={handleJoinTeam}
+                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+              >
+                Join Team
+              </button>
+
+              <button
+                onClick={() => setView('selection')}
+                className="w-full py-3 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render team view (after creating or joining)
+  if (view === 'team' && currentTeam) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Team Header */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">{currentTeam.name}</h1>
+                <p className="text-gray-600 mt-1">Your role: {currentTeam.role}</p>
+              </div>
+              <button
+                onClick={handleLeaveTeam}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Leave Team
+              </button>
+            </div>
+          </div>
+
+          {/* Team Code */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Team Code</h2>
+            <p className="text-gray-600 mb-3">Share this code with others to invite them</p>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex-1 px-4 py-3 bg-gray-100 rounded-lg text-center">
+                <span className="text-2xl font-bold text-gray-800 tracking-widest">
+                  {currentTeam.code}
+                </span>
+              </div>
+              <button
+                onClick={copyToClipboard}
+                className="px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+              >
+                {copied ? <Check size={20} /> : <Copy size={20} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
+          {/* Team Members */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Team Members</h2>
+            
+            <div className="space-y-3">
+              {teamMembers.map(member => (
+                <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center text-lg font-bold">
+                      {member.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">{member.name}</p>
+                      <p className="text-sm text-gray-600">{member.email}</p>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    member.role === 'Leader' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-gray-200 text-gray-800'
+                  }`}>
+                    {member.role}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
 
 export default TeamManagement;
