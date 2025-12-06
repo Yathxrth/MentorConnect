@@ -1,44 +1,196 @@
-import React from "react";
+import { useState } from 'react';
+import { Search, Calendar, Tag } from 'lucide-react';
 
-const BrowseTasks = () => {
+// Browse Tasks Component - View and apply to available tasks
+function BrowseTasks({ setCurrentPage }) {
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+
+  // Mock tasks data
+  const allTasks = [
+    {
+      id: 1,
+      title: 'Build a REST API with Node.js',
+      description: 'Create a RESTful API for a blog platform with CRUD operations',
+      mentor: 'Dr. Sarah Johnson',
+      company: 'Tech Corp',
+      difficulty: 'Medium',
+      deadline: '2025-12-20',
+      tags: ['Node.js', 'Express', 'MongoDB'],
+      applicants: 5
+    },
+    {
+      id: 2,
+      title: 'Frontend Design Challenge',
+      description: 'Design and build a responsive landing page for a startup',
+      mentor: 'Mike Chen',
+      company: 'Design Studio',
+      difficulty: 'Easy',
+      deadline: '2025-12-15',
+      tags: ['React', 'CSS', 'Tailwind'],
+      applicants: 8
+    },
+    {
+      id: 3,
+      title: 'Machine Learning Image Classifier',
+      description: 'Build an image classification model using TensorFlow',
+      mentor: 'Prof. Amanda Lee',
+      company: 'AI Research Lab',
+      difficulty: 'Hard',
+      deadline: '2026-01-05',
+      tags: ['Python', 'TensorFlow', 'ML'],
+      applicants: 3
+    },
+    {
+      id: 4,
+      title: 'Mobile App Development',
+      description: 'Create a cross-platform mobile app for task management',
+      mentor: 'John Smith',
+      company: 'Mobile Inc',
+      difficulty: 'Medium',
+      deadline: '2025-12-30',
+      tags: ['React Native', 'JavaScript', 'Firebase'],
+      applicants: 6
+    },
+    {
+      id: 5,
+      title: 'Database Optimization Project',
+      description: 'Optimize queries and improve database performance',
+      mentor: 'Rachel Green',
+      company: 'Data Systems',
+      difficulty: 'Hard',
+      deadline: '2026-01-10',
+      tags: ['SQL', 'PostgreSQL', 'Performance'],
+      applicants: 2
+    }
+  ];
+
+  // Filter tasks based on search and difficulty
+  const filteredTasks = allTasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          task.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDifficulty = selectedDifficulty === 'all' || task.difficulty === selectedDifficulty;
+    return matchesSearch && matchesDifficulty;
+  });
+
+  // Handle apply to task
+  const handleApply = (taskId) => {
+    // Here you would send application to backend
+    console.log('Applying to task:', taskId);
+    alert('Application submitted! The mentor will review your request.');
+  };
+
   return (
-    <>
-      <section className="relative z-10 bg-primary py-[120px]">
-        <div className="container mx-auto">
-          <div className="-mx-4 flex">
-            <div className="w-full px-4">
-              <div className="mx-auto max-w-[400px] text-center">
-                <h2 className="mb-2 text-[50px] font-bold leading-none text-white sm:text-[80px] md:text-[100px]">
-                  404
-                </h2>
-                <h4 className="mb-3 text-[22px] font-semibold leading-tight text-white">
-                  Oops! That page can’t be found
-                </h4>
-                <p className="mb-8 text-lg text-white">
-                  The page you are looking for it maybe deleted
-                </p>
-                <a
-                  href="javascript:void(0)"
-                  className="inline-block rounded-lg border border-white px-8 py-3 text-center text-base font-semibold text-white transition hover:bg-white hover:text-primary"
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Browse Tasks</h1>
+          <p className="text-gray-600">Find and apply to tasks that match your skills</p>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="grid md:grid-cols-2 gap-4">
+            
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+              />
+            </div>
+
+            {/* Difficulty Filter */}
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+            >
+              <option value="all">All Difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Tasks List */}
+        <div className="space-y-4">
+          {filteredTasks.map(task => (
+            <div key={task.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+              
+              {/* Task Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{task.title}</h3>
+                  <p className="text-gray-600 mb-3">{task.description}</p>
+                  
+                  {/* Mentor Info */}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>👨‍🏫 {task.mentor}</span>
+                    <span>🏢 {task.company}</span>
+                  </div>
+                </div>
+
+                {/* Difficulty Badge */}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  task.difficulty === 'Easy' 
+                    ? 'bg-green-100 text-green-800' 
+                    : task.difficulty === 'Medium'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {task.difficulty}
+                </span>
+              </div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {task.tags.map((tag, index) => (
+                  <span key={index} className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                    <Tag size={14} />
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Calendar size={16} />
+                    Deadline: {task.deadline}
+                  </span>
+                  <span>{task.applicants} teams applied</span>
+                </div>
+
+                <button
+                  onClick={() => handleApply(task.id)}
+                  className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
                 >
-                  Go To Home
-                </a>
+                  Apply
+                </button>
               </div>
             </div>
-          </div>
-        </div>
+          ))}
 
-        <div className="absolute left-0 top-0 -z-10 flex h-full w-full items-center justify-between space-x-5 md:space-x-8 lg:space-x-14">
-          <div className="h-full w-1/3 bg-gradient-to-t from-[#FFFFFF14] to-[#C4C4C400]"></div>
-          <div className="flex h-full w-1/3">
-            <div className="h-full w-1/2 bg-gradient-to-b from-[#FFFFFF14] to-[#C4C4C400]"></div>
-            <div className="h-full w-1/2 bg-gradient-to-t from-[#FFFFFF14] to-[#C4C4C400]"></div>
-          </div>
-          <div className="h-full w-1/3 bg-gradient-to-b from-[#FFFFFF14] to-[#C4C4C400]"></div>
+          {/* No Results */}
+          {filteredTasks.length === 0 && (
+            <div className="text-center py-12 bg-white rounded-lg">
+              <p className="text-gray-600">No tasks found matching your criteria</p>
+            </div>
+          )}
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
-};
+}
 
 export default BrowseTasks;
