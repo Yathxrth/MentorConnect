@@ -28,7 +28,7 @@ function Login({ setCurrentPage, onLogin }) {
 
     // Mock user data
     const mockUserData = {
-      name: 'John Doe',
+      name: 'Yatharth Singh',
       email: formData.email,
       role: formData.role,
       id: '123456'
