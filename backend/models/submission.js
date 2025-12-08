@@ -28,6 +28,10 @@ const submissionSchema = mongoose.Schema({
     type: String,
     default: ''
   },
+  driveLink: {
+    type: String,
+    default: ''
+  },
   notes: {
     type: String,
     default: ''

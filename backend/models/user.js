@@ -53,10 +53,6 @@ const userSchema = mongoose.Schema({
     type: String,
     default: ''
   },
-  badges: {
-    type: [String],
-    default: []
-  },
   
   // Mentor-specific fields
   company: {

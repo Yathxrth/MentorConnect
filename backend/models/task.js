@@ -15,10 +15,9 @@ const taskSchema = mongoose.Schema({
     type: Date,
     required: true
   },
-  difficulty: {
-    type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
-    default: 'Medium'
+  totalPoints: {
+    type: Number,
+    default: 100
   },
   
   // Tags for filtering
@@ -26,12 +25,6 @@ const taskSchema = mongoose.Schema({
     type: [String],
     default: []
   },
-  
-  // Rubric for evaluation
-  rubric: [{
-    criteria: String,
-    points: Number
-  }],
   
   // Mentor who created the task
   mentorId: {
