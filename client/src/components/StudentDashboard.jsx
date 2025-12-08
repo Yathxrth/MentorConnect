@@ -31,7 +31,7 @@ function StudentDashboard({ setCurrentPage, userData }) {
   const stats = {
     tasksCompleted: 5,
     tasksActive: 2,
-    badgesEarned: 3,
+    // badgesEarned: 3,
     teamMembers: 4
   };
 
@@ -48,7 +48,7 @@ function StudentDashboard({ setCurrentPage, userData }) {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex items-center justify-between">
@@ -56,7 +56,7 @@ function StudentDashboard({ setCurrentPage, userData }) {
                 <p className="text-gray-600 text-sm">Completed Tasks</p>
                 <p className="text-3xl font-bold text-gray-800">{stats.tasksCompleted}</p>
               </div>
-              <BookOpen className="text-gray-400" size={32} />
+              {/* <BookOpen className="text-gray-400" size={32} /> */}
             </div>
           </div>
 
@@ -66,17 +66,7 @@ function StudentDashboard({ setCurrentPage, userData }) {
                 <p className="text-gray-600 text-sm">Active Tasks</p>
                 <p className="text-3xl font-bold text-gray-800">{stats.tasksActive}</p>
               </div>
-              <BookOpen className="text-gray-400" size={32} />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Badges Earned</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.badgesEarned}</p>
-              </div>
-              <Award className="text-gray-400" size={32} />
+              {/* <BookOpen className="text-gray-400" size={32} /> */}
             </div>
           </div>
 
@@ -86,7 +76,7 @@ function StudentDashboard({ setCurrentPage, userData }) {
                 <p className="text-gray-600 text-sm">Team Members</p>
                 <p className="text-3xl font-bold text-gray-800">{stats.teamMembers}</p>
               </div>
-              <Users className="text-gray-400" size={32} />
+              {/* <Users className="text-gray-400" size={32} /> */}
             </div>
           </div>
         </div>

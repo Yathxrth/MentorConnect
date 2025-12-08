@@ -8,12 +8,9 @@ function MentorTaskCreate({ setCurrentPage }) {
     title: '',
     description: '',
     deadline: '',
-    difficulty: 'Medium',
+    totalPoints: 100,
     tags: [],
-    newTag: '',
-    rubricItems: [
-      { criteria: '', points: 0 }
-    ]
+    newTag: ''
   });
 
   // Handle input change
@@ -43,36 +40,6 @@ function MentorTaskCreate({ setCurrentPage }) {
     });
   };
 
-  // Add rubric item
-  const handleAddRubricItem = () => {
-    setTaskData({
-      ...taskData,
-      rubricItems: [...taskData.rubricItems, { criteria: '', points: 0 }]
-    });
-  };
-
-  // Remove rubric item
-  const handleRemoveRubricItem = (index) => {
-    const newItems = taskData.rubricItems.filter((_, i) => i !== index);
-    setTaskData({
-      ...taskData,
-      rubricItems: newItems
-    });
-  };
-
-  // Handle rubric item change
-  const handleRubricChange = (index, field, value) => {
-    const newItems = [...taskData.rubricItems];
-    newItems[index][field] = value;
-    setTaskData({
-      ...taskData,
-      rubricItems: newItems
-    });
-  };
-
-  // Calculate total points
-  const totalPoints = taskData.rubricItems.reduce((sum, item) => sum + (parseInt(item.points) || 0), 0);
-
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -88,10 +55,6 @@ function MentorTaskCreate({ setCurrentPage }) {
     }
     if (!taskData.deadline) {
       alert('Please select a deadline');
-      return;
-    }
-    if (taskData.rubricItems.some(item => !item.criteria.trim())) {
-      alert('Please fill in all rubric criteria');
       return;
     }
 
@@ -146,7 +109,7 @@ function MentorTaskCreate({ setCurrentPage }) {
             />
           </div>
 
-          {/* Deadline and Difficulty Row */}
+          {/* Deadline and Total Points Row */}
           <div className="grid md:grid-cols-2 gap-6">
             
             {/* Deadline */}
@@ -164,21 +127,20 @@ function MentorTaskCreate({ setCurrentPage }) {
               />
             </div>
 
-            {/* Difficulty */}
+            {/* Total Points */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Difficulty Level
+                Total Points
               </label>
-              <select
-                name="difficulty"
-                value={taskData.difficulty}
+              <input
+                type="number"
+                name="totalPoints"
+                value={taskData.totalPoints}
                 onChange={handleChange}
+                min="1"
+                placeholder="e.g., 100"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
+              />
             </div>
           </div>
 
@@ -223,62 +185,6 @@ function MentorTaskCreate({ setCurrentPage }) {
                 </button>
               </div>
             )}
-          </div>
-
-          {/* Rubric Section */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Evaluation Rubric *
-              </label>
-              <button
-                type="button"
-                onClick={handleAddRubricItem}
-                className="flex items-center gap-1 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-700"
-              >
-                <Plus size={16} />
-                Add Criteria
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {taskData.rubricItems.map((item, index) => (
-                <div key={index} className="flex gap-3 items-start">
-                  <input
-                    type="text"
-                    value={item.criteria}
-                    onChange={(e) => handleRubricChange(index, 'criteria', e.target.value)}
-                    placeholder="Evaluation criteria"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
-                    required
-                  />
-                  <input
-                    type="number"
-                    value={item.points}
-                    onChange={(e) => handleRubricChange(index, 'points', e.target.value)}
-                    placeholder="Points"
-                    min="0"
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
-                    required
-                  />
-                  {taskData.rubricItems.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveRubricItem(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <X size={20} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Total Points Display */}
-            <div className="mt-4 p-3 bg-gray-100 rounded-lg flex items-center justify-between">
-              <span className="font-medium text-gray-700">Total Points:</span>
-              <span className="text-xl font-bold text-gray-800">{totalPoints}</span>
-            </div>
           </div>
 
           {/* Submit Buttons */}
