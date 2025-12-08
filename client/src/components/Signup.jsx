@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Mail, Lock, User, Github } from 'lucide-react';
+import { signup } from '../utils/api'; // Import API function
 
-// Signup component for new users
+// Signup component with backend integration
 function Signup({ setCurrentPage }) {
   // Form state
   const [formData, setFormData] = useState({
@@ -9,9 +10,13 @@ function Signup({ setCurrentPage }) {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student', // Default to student
+    role: 'student',
     githubUsername: ''
   });
+  
+  // Loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // Handle input changes
   const handleChange = (e) => {
@@ -19,27 +24,48 @@ function Signup({ setCurrentPage }) {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  // Handle form submission with API call
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
     // Basic validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
     }
 
     if (!formData.email.includes('@')) {
-      alert('Please enter a valid email');
+      setError('Please enter a valid email');
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
-    // Here you would send data to your backend
-    console.log('Signup data:', formData);
-    alert('Signup successful! Please login.');
-    setCurrentPage('login');
+    // Set loading state
+    setIsLoading(true);
+
+    try {
+      // Call the signup API
+      const response = await signup(formData);
+      
+      if (response.success) {
+        alert('Signup successful! Please login.');
+        setCurrentPage('login');
+      }
+    } catch (err) {
+      // Handle error
+      setError(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,6 +75,13 @@ function Signup({ setCurrentPage }) {
         {/* Header */}
         <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
         <p className="text-gray-600 mb-6">Join the Obsidian Circle community</p>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,6 +101,7 @@ function Signup({ setCurrentPage }) {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                 placeholder="John Doe"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -87,6 +121,7 @@ function Signup({ setCurrentPage }) {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                 placeholder="student@college.edu"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -101,6 +136,7 @@ function Signup({ setCurrentPage }) {
               value={formData.role}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+              disabled={isLoading}
             >
               <option value="student">Student</option>
               <option value="mentor">Alumni / Mentor</option>
@@ -121,6 +157,7 @@ function Signup({ setCurrentPage }) {
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                 placeholder="yourusername"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -140,6 +177,7 @@ function Signup({ setCurrentPage }) {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -159,6 +197,7 @@ function Signup({ setCurrentPage }) {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -166,9 +205,10 @@ function Signup({ setCurrentPage }) {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+            className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Sign Up
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
 
@@ -178,6 +218,7 @@ function Signup({ setCurrentPage }) {
           <button
             onClick={() => setCurrentPage('login')}
             className="text-gray-800 font-medium hover:underline"
+            disabled={isLoading}
           >
             Login
           </button>
