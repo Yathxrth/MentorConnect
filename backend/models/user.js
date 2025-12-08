@@ -1,9 +1,6 @@
 // User model for both students and mentors
 const mongoose = require('mongoose');
 
-// Connect to MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/obsidian_circle');
-
 const userSchema = mongoose.Schema({
   // Basic info
   name: {

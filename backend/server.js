@@ -1,5 +1,8 @@
 // Main server file
 const express = require('express');
+require('dotenv').config();
+const connectDB = require('./db.js');
+connectDB();
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
