@@ -19,7 +19,7 @@ app.use(cors({
 }));
 
 // Secret key for JWT (in production, use environment variable)
-const JWT_SECRET = 'your-secret-key-here-change-in-production';
+const JWT_SECRET = "abc123";
 
 // Middleware
 app.set('view engine', 'ejs');
@@ -392,7 +392,7 @@ app.post('/team/:id/leave', isLoggedIn, async (req, res) => {
   }
 });
 
-// ========== MENTOR ROUTES (Basic - you mentioned to leave for now) ==========
+// ========== MENTOR ROUTES ==========
 
 // Create task (mentor only)
 app.post('/mentor/task/create', isLoggedIn, async (req, res) => {
