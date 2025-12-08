@@ -149,26 +149,6 @@ function MentorProfile({ setCurrentPage, userData }) {
                 </div>
               </div>
             </div>
-
-            {/* Mentoring Stats */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Mentoring Impact</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <p className="text-2xl font-bold text-gray-800">{mentoringStats.totalTasks}</p>
-                  <p className="text-sm text-gray-600">Tasks Created</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-800">{mentoringStats.teamsmentored}</p>
-                  <p className="text-sm text-gray-600">Teams Mentored</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-800">{mentoringStats.studentsHelped}</p>
-                  <p className="text-sm text-gray-600">Students Helped</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Right Column - Details */}

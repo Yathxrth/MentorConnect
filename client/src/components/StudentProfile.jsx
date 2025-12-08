@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Github, Linkedin, Award, Edit2 } from 'lucide-react';
+import { Mail, Github, Linkedin, Edit2 } from 'lucide-react';
 
 // Student Profile Component - View and edit student information
 function StudentProfile({ setCurrentPage, userData }) {
@@ -17,13 +17,6 @@ function StudentProfile({ setCurrentPage, userData }) {
     linkedinUrl: 'https://linkedin.com/in/johndoe',
     newSkill: ''
   });
-
-  // Mock badges
-  const badges = [
-    { id: 1, name: 'First Task Completed', icon: '🎯' },
-    { id: 2, name: 'Team Player', icon: '👥' },
-    { id: 3, name: 'Quick Learner', icon: '⚡' }
-  ];
 
   // Mock completed tasks
   const completedTasks = [
@@ -151,23 +144,6 @@ function StudentProfile({ setCurrentPage, userData }) {
                     </a>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Badges */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Award className="text-gray-600" size={20} />
-                <h3 className="text-lg font-bold text-gray-800">Badges</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {badges.map(badge => (
-                  <div key={badge.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-2xl">{badge.icon}</span>
-                    <span className="text-sm text-gray-800">{badge.name}</span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

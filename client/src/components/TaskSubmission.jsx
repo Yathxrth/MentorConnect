@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, Github, Link2, FileText, MessageCircle } from 'lucide-react';
+import { Github, Link2, MessageCircle } from 'lucide-react';
 
 // Task Submission Component - Submit work and communicate with mentor
 function TaskSubmission({ setCurrentPage }) {
@@ -7,8 +7,8 @@ function TaskSubmission({ setCurrentPage }) {
   const [submissionData, setSubmissionData] = useState({
     githubUrl: '',
     demoUrl: '',
-    notes: '',
-    files: []
+    driveLink: '',
+    notes: ''
   });
 
   // State for comments
@@ -19,7 +19,7 @@ function TaskSubmission({ setCurrentPage }) {
     id: 1,
     title: 'Build a REST API with Node.js',
     description: 'Create a RESTful API for a blog platform with CRUD operations for posts, users, and comments.',
-    mentor: 'Dr. Sarah Johnson',
+    mentor: 'Dr. Reena Rai',
     deadline: '2025-12-20',
     rubric: [
       { criteria: 'API endpoints working correctly', points: 30 },
@@ -34,7 +34,7 @@ function TaskSubmission({ setCurrentPage }) {
   const comments = [
     {
       id: 1,
-      author: 'Dr. Sarah Johnson',
+      author: 'Dr. Reena Rai',
       role: 'Mentor',
       text: 'Looking forward to your submission! Make sure to include proper error handling.',
       time: '2 days ago'
@@ -56,31 +56,13 @@ function TaskSubmission({ setCurrentPage }) {
     });
   };
 
-  // Handle file upload
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setSubmissionData({
-      ...submissionData,
-      files: [...submissionData.files, ...files]
-    });
-  };
-
-  // Remove file
-  const removeFile = (index) => {
-    const newFiles = submissionData.files.filter((_, i) => i !== index);
-    setSubmissionData({
-      ...submissionData,
-      files: newFiles
-    });
-  };
-
   // Handle submission
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // Validate
-    if (!submissionData.githubUrl && submissionData.files.length === 0) {
-      alert('Please provide either a GitHub URL or upload files');
+    if (!submissionData.githubUrl && !submissionData.driveLink) {
+      alert('Please provide either a GitHub URL or a Drive link');
       return;
     }
 
@@ -122,25 +104,8 @@ function TaskSubmission({ setCurrentPage }) {
               <p className="text-gray-600 mb-4">{taskData.description}</p>
               
               <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span>👨‍🏫 Mentor: {taskData.mentor}</span>
-                <span>📅 Deadline: {taskData.deadline}</span>
-              </div>
-            </div>
-
-            {/* Rubric */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Evaluation Rubric</h2>
-              <div className="space-y-3">
-                {taskData.rubric.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-700">{item.criteria}</span>
-                    <span className="font-semibold text-gray-800">{item.points} pts</span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between p-3 bg-gray-800 text-white rounded-lg font-bold">
-                  <span>Total</span>
-                  <span>{taskData.rubric.reduce((sum, item) => sum + item.points, 0)} pts</span>
-                </div>
+                <span>Mentor: {taskData.mentor}</span>
+                <span>Deadline: {taskData.deadline}</span>
               </div>
             </div>
 
@@ -171,7 +136,7 @@ function TaskSubmission({ setCurrentPage }) {
                 {/* Demo URL */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Demo URL (Optional)
+                    Demo URL
                   </label>
                   <div className="relative">
                     <Link2 className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -186,48 +151,22 @@ function TaskSubmission({ setCurrentPage }) {
                   </div>
                 </div>
 
-                {/* File Upload */}
+                {/* Drive Link */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Files (Optional)
+                    Drive Link
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400">
-                    <Upload className="mx-auto text-gray-400 mb-2" size={32} />
-                    <p className="text-sm text-gray-600 mb-2">
-                      Click to upload or drag and drop
-                    </p>
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-3 text-gray-400" size={20} />
                     <input
-                      type="file"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
+                      type="url"
+                      name="driveLink"
+                      value={submissionData.driveLink}
+                      onChange={handleChange}
+                      placeholder="https://drive.google.com/..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                     />
-                    <label
-                      htmlFor="file-upload"
-                      className="inline-block px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
-                    >
-                      Choose Files
-                    </label>
                   </div>
-                  
-                  {/* Display uploaded files */}
-                  {submissionData.files.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {submissionData.files.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <span className="text-sm text-gray-700">{file.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(index)}
-                            className="text-red-600 hover:text-red-800 text-sm"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Notes */}
