@@ -19,9 +19,9 @@ function TeamManagement({ setCurrentPage }) {
 
   // Mock team members
   const teamMembers = [
-    { id: 1, name: 'John Doe', role: 'Leader', email: 'john@college.edu' },
-    { id: 2, name: 'Jane Smith', role: 'Member', email: 'jane@college.edu' },
-    { id: 3, name: 'Mike Johnson', role: 'Member', email: 'mike@college.edu' }
+    { id: 1, name: 'Narendra Prajapat', role: 'Leader', email: 'narendra@mnnit.ac.in' },
+    { id: 2, name: 'Yatharth Singh', role: 'Member', email: 'yatharth@mnnit.ac.in' },
+    { id: 3, name: 'Parth Kishan', role: 'Member', email: 'parth@mnnit.ac.in' }
   ];
 
   // Generate random team code
@@ -65,7 +65,7 @@ function TeamManagement({ setCurrentPage }) {
     
     // Mock joining team
     setCurrentTeam({
-      name: 'Awesome Team',
+      name: 'Lost Cause',
       code: teamCode,
       role: 'Member'
     });
