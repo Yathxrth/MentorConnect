@@ -7,14 +7,14 @@ function StudentDashboard({ setCurrentPage, userData }) {
     {
       id: 1,
       title: 'Build a REST API',
-      mentor: 'Dr. Sarah Johnson',
+      mentor: 'Dr. Reena Rai',
       deadline: '2025-12-15',
       status: 'In Progress'
     },
     {
       id: 2,
       title: 'Frontend Design Challenge',
-      mentor: 'Mike Chen',
+      mentor: 'Rajeev Gupta',
       deadline: '2025-12-20',
       status: 'Pending Review'
     }
