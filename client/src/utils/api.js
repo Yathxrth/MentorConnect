@@ -49,6 +49,11 @@ export const logout = async () => {
   return apiCall('/logout');
 };
 
+// Verify if user is still logged in (for page reload)
+export const verifyToken = async () => {
+  return apiCall('/verify-token');
+};
+
 // ========== STUDENT APIs ==========
 
 export const getStudentProfile = async () => {

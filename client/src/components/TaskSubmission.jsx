@@ -1,3 +1,4 @@
+import TaskChat from './TaskChat';
 import { useState, useEffect } from 'react';
 import { Upload, Github, Link2, FileText } from 'lucide-react';
 import { getTaskById, submitTask } from '../utils/api';
@@ -77,6 +78,10 @@ function TaskSubmission({ setCurrentPage, taskId }) {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-3">{task?.title}</h1>
           <p className="text-gray-600 mb-4">{task?.description}</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <TaskChat taskId={task._id} userData={userData} />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6">
