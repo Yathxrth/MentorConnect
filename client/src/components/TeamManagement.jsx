@@ -1,94 +1,100 @@
 import { useState } from 'react';
 import { Users, Copy, Check } from 'lucide-react';
+import { createTeam, joinTeam, leaveTeam } from '../utils/api';
 
-// Team Management Component - Create or join teams
+// Team Management Component with backend integration
 function TeamManagement({ setCurrentPage }) {
   // State for current view
-  const [view, setView] = useState('selection'); // 'selection', 'create', 'join', 'team'
-  
-  // State for team code
+  const [view, setView] = useState('selection');
   const [teamCode, setTeamCode] = useState('');
-  const [generatedCode, setGeneratedCode] = useState('');
+  const [teamName, setTeamName] = useState('');
+  const [currentTeam, setCurrentTeam] = useState(null);
   const [copied, setCopied] = useState(false);
   
-  // State for team name
-  const [teamName, setTeamName] = useState('');
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Mock current team data
-  const [currentTeam, setCurrentTeam] = useState(null);
-
-  // Mock team members
-  const teamMembers = [
-    { id: 1, name: 'Narendra Prajapat', role: 'Leader', email: 'narendra@mnnit.ac.in' },
-    { id: 2, name: 'Yatharth Singh', role: 'Member', email: 'yatharth@mnnit.ac.in' },
-    { id: 3, name: 'Parth Kishan', role: 'Member', email: 'parth@mnnit.ac.in' }
-  ];
-
-  // Generate random team code
-  const generateTeamCode = () => {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return code;
-  };
-
-  // Handle create team
-  const handleCreateTeam = () => {
+  // Handle create team with API call
+  const handleCreateTeam = async () => {
     if (!teamName.trim()) {
-      alert('Please enter a team name');
+      setError('Please enter a team name');
       return;
     }
 
-    const code = generateTeamCode();
-    setGeneratedCode(code);
-    
-    // Here you would send data to backend
-    console.log('Creating team:', { name: teamName, code: code });
-    
-    // Set current team
-    setCurrentTeam({
-      name: teamName,
-      code: code,
-      role: 'Leader'
-    });
-    
-    setView('team');
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await createTeam(teamName);
+      
+      if (response.success) {
+        setCurrentTeam(response.team);
+        setView('team');
+        alert('Team created successfully!');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to create team');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Handle join team
-  const handleJoinTeam = () => {
+  // Handle join team with API call
+  const handleJoinTeam = async () => {
     if (!teamCode.trim()) {
-      alert('Please enter a team code');
+      setError('Please enter a team code');
       return;
     }
 
-    // Here you would verify code with backend
-    console.log('Joining team with code:', teamCode);
-    
-    // Mock joining team
-    setCurrentTeam({
-      name: 'Lost Cause',
-      code: teamCode,
-      role: 'Member'
-    });
-    
-    alert('Successfully joined the team!');
-    setView('team');
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await joinTeam(teamCode);
+      
+      if (response.success) {
+        setCurrentTeam(response.team);
+        setView('team');
+        alert('Successfully joined the team!');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to join team. Invalid code?');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Copy team code to clipboard
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedCode || currentTeam?.code);
+    navigator.clipboard.writeText(currentTeam?.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Leave team
-  const handleLeaveTeam = () => {
-    if (window.confirm('Are you sure you want to leave this team?')) {
-      setCurrentTeam(null);
-      setView('selection');
-      setTeamCode('');
-      setTeamName('');
-      setGeneratedCode('');
+  // Handle leave team with API call
+  const handleLeaveTeam = async () => {
+    if (!window.confirm('Are you sure you want to leave this team?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await leaveTeam(currentTeam._id);
+      
+      if (response.success) {
+        setCurrentTeam(null);
+        setView('selection');
+        setTeamCode('');
+        setTeamName('');
+        alert('Left team successfully');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to leave team');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -99,6 +105,12 @@ function TeamManagement({ setCurrentPage }) {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Team Management</h1>
           
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-6">
             
             {/* Create Team Card */}
@@ -148,6 +160,12 @@ function TeamManagement({ setCurrentPage }) {
           <div className="bg-white rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Create New Team</h2>
             
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -159,19 +177,25 @@ function TeamManagement({ setCurrentPage }) {
                   onChange={(e) => setTeamName(e.target.value)}
                   placeholder="Enter team name"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+                  disabled={isLoading}
                 />
               </div>
 
               <button
                 onClick={handleCreateTeam}
-                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
-                Create Team
+                {isLoading ? 'Creating...' : 'Create Team'}
               </button>
 
               <button
-                onClick={() => setView('selection')}
+                onClick={() => {
+                  setView('selection');
+                  setError('');
+                }}
                 className="w-full py-3 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100"
+                disabled={isLoading}
               >
                 Back
               </button>
@@ -190,6 +214,12 @@ function TeamManagement({ setCurrentPage }) {
           <div className="bg-white rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Join Team</h2>
             
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -202,6 +232,7 @@ function TeamManagement({ setCurrentPage }) {
                   placeholder="Enter 6-digit code"
                   maxLength={6}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800 uppercase"
+                  disabled={isLoading}
                 />
                 <p className="text-sm text-gray-500 mt-2">
                   Ask your team leader for the team code
@@ -210,14 +241,19 @@ function TeamManagement({ setCurrentPage }) {
 
               <button
                 onClick={handleJoinTeam}
-                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
-                Join Team
+                {isLoading ? 'Joining...' : 'Join Team'}
               </button>
 
               <button
-                onClick={() => setView('selection')}
+                onClick={() => {
+                  setView('selection');
+                  setError('');
+                }}
                 className="w-full py-3 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100"
+                disabled={isLoading}
               >
                 Back
               </button>
@@ -234,18 +270,25 @@ function TeamManagement({ setCurrentPage }) {
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-4xl mx-auto">
           
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
           {/* Team Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">{currentTeam.name}</h1>
-                <p className="text-gray-600 mt-1">Your role: {currentTeam.role}</p>
+                <p className="text-gray-600 mt-1">Team Code: {currentTeam.code}</p>
               </div>
               <button
                 onClick={handleLeaveTeam}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                disabled={isLoading}
               >
-                Leave Team
+                {isLoading ? 'Leaving...' : 'Leave Team'}
               </button>
             </div>
           </div>
@@ -273,26 +316,28 @@ function TeamManagement({ setCurrentPage }) {
 
           {/* Team Members */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Team Members</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Team Members ({currentTeam.members?.length || 0})
+            </h2>
             
             <div className="space-y-3">
-              {teamMembers.map(member => (
-                <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              {currentTeam.members && currentTeam.members.map((member, index) => (
+                <div key={member._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center text-lg font-bold">
-                      {member.name.charAt(0)}
+                      {member.name?.charAt(0).toUpperCase() || 'M'}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">{member.name}</p>
-                      <p className="text-sm text-gray-600">{member.email}</p>
+                      <p className="font-medium text-gray-800">{member.name || 'Member'}</p>
+                      <p className="text-sm text-gray-600">{member.email || ''}</p>
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    member.role === 'Leader' 
+                    member._id === currentTeam.leaderId 
                       ? 'bg-blue-100 text-blue-800' 
                       : 'bg-gray-200 text-gray-800'
                   }`}>
-                    {member.role}
+                    {member._id === currentTeam.leaderId ? 'Leader' : 'Member'}
                   </span>
                 </div>
               ))}

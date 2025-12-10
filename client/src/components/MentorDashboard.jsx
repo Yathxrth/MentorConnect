@@ -1,52 +1,71 @@
+import { useState, useEffect } from 'react';
 import { ClipboardList, Users, CheckCircle, Clock } from 'lucide-react';
+import { getMentorTasks, getMentorSubmissions } from '../utils/api';
 
-// Mentor Dashboard - Main page for mentors after login
+// Mentor Dashboard with backend integration
 function MentorDashboard({ setCurrentPage, userData }) {
-  // Mock data for mentor's tasks
-  const myTasks = [
-    {
-      id: 1,
-      title: 'Build a REST API',
-      applicants: 5,
-      activeTeams: 2,
-      pendingReviews: 1,
-      status: 'Active'
-    },
-    {
-      id: 2,
-      title: 'Frontend Design Challenge',
-      applicants: 8,
-      activeTeams: 3,
-      pendingReviews: 2,
-      status: 'Active'
-    }
-  ];
+  // State for dashboard data
+  const [myTasks, setMyTasks] = useState([]);
+  const [pendingReviews, setPendingReviews] = useState([]);
+  const [stats, setStats] = useState({
+    activeTasks: 0,
+    totalTeams: 0,
+    pendingReviews: 0,
+    completedReviews: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock submissions pending review
-  const pendingReviews = [
-    {
-      id: 1,
-      taskTitle: 'Build a REST API',
-      teamName: 'Code Warriors',
-      submittedDate: '2025-12-03',
-      teamMembers: 4
-    },
-    {
-      id: 2,
-      taskTitle: 'Frontend Design Challenge',
-      teamName: 'Design Squad',
-      submittedDate: '2025-12-04',
-      teamMembers: 3
-    }
-  ];
+  // Fetch dashboard data on mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  // Mock statistics
-  const stats = {
-    activeTasks: 2,
-    totalTeams: 5,
-    pendingReviews: 3,
-    completedReviews: 12
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch mentor's tasks
+      const tasksResponse = await getMentorTasks();
+      if (tasksResponse.success) {
+        setMyTasks(tasksResponse.tasks);
+        
+        // Calculate stats
+        const activeTasks = tasksResponse.tasks.filter(t => t.status === 'active').length;
+        const totalTeams = tasksResponse.tasks.reduce((sum, task) => sum + (task.activeTeams || 0), 0);
+        
+        setStats(prev => ({
+          ...prev,
+          activeTasks,
+          totalTeams
+        }));
+      }
+
+      // Fetch pending submissions
+      const submissionsResponse = await getMentorSubmissions();
+      if (submissionsResponse.success) {
+        const pending = submissionsResponse.submissions.filter(s => s.status === 'submitted');
+        setPendingReviews(pending);
+        
+        setStats(prev => ({
+          ...prev,
+          pendingReviews: pending.length,
+          completedReviews: submissionsResponse.submissions.filter(s => s.status === 'reviewed').length
+        }));
+      }
+    } catch (err) {
+      setError('Failed to load dashboard');
+      console.error('Dashboard error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -59,6 +78,13 @@ function MentorDashboard({ setCurrentPage, userData }) {
           </h1>
           <p className="text-gray-600 mt-2">Here's an overview of your mentorship activities</p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -119,44 +145,46 @@ function MentorDashboard({ setCurrentPage, userData }) {
             </div>
 
             <div className="space-y-4">
-              {myTasks.map(task => (
-                <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 cursor-pointer">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-800">{task.title}</h3>
-                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                      {task.status}
-                    </span>
+              {myTasks.length > 0 ? (
+                myTasks.map(task => (
+                  <div key={task._id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 cursor-pointer">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-semibold text-gray-800">{task.title}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        task.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {task.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
+                      <div>
+                        <p className="font-medium">{task.applicants || 0}</p>
+                        <p className="text-xs">Applicants</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">{task.activeTeams || 0}</p>
+                        <p className="text-xs">Active Teams</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">{new Date(task.deadline).toLocaleDateString()}</p>
+                        <p className="text-xs">Deadline</p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
-                    <div>
-                      <p className="font-medium">{task.applicants}</p>
-                      <p className="text-xs">Applicants</p>
-                    </div>
-                    <div>
-                      <p className="font-medium">{task.activeTeams}</p>
-                      <p className="text-xs">Active Teams</p>
-                    </div>
-                    <div>
-                      <p className="font-medium">{task.pendingReviews}</p>
-                      <p className="text-xs">Pending</p>
-                    </div>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No tasks created yet</p>
+                  <button 
+                    onClick={() => setCurrentPage('mentor-create-task')}
+                    className="mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    Create Your First Task
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
-
-            {myTasks.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>No tasks created yet</p>
-                <button 
-                  onClick={() => setCurrentPage('mentor-create-task')}
-                  className="mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Create Your First Task
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Pending Reviews Section */}
@@ -164,33 +192,35 @@ function MentorDashboard({ setCurrentPage, userData }) {
             <h2 className="text-xl font-bold text-gray-800 mb-6">Pending Reviews</h2>
 
             <div className="space-y-4">
-              {pendingReviews.map(review => (
-                <div key={review.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 cursor-pointer">
-                  <div className="mb-3">
-                    <h3 className="font-semibold text-gray-800">{review.taskTitle}</h3>
-                    <p className="text-sm text-gray-600">Team: {review.teamName}</p>
+              {pendingReviews.length > 0 ? (
+                pendingReviews.map(review => (
+                  <div key={review._id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 cursor-pointer">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-gray-800">{review.taskId?.title || 'Task'}</h3>
+                      <p className="text-sm text-gray-600">
+                        Student: {review.studentId?.name || 'Student'}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">
+                        Submitted: {new Date(review.submittedAt).toLocaleDateString()}
+                      </span>
+                      <button 
+                        onClick={() => setCurrentPage('mentor-evaluation')}
+                        className="px-4 py-1 bg-gray-800 text-white rounded hover:bg-gray-700"
+                      >
+                        Review
+                      </button>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      Submitted: {review.submittedDate}
-                    </span>
-                    <button 
-                      onClick={() => setCurrentPage('mentor-evaluation')}
-                      className="px-4 py-1 bg-gray-800 text-white rounded hover:bg-gray-700"
-                    >
-                      Review
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No pending reviews</p>
                 </div>
-              ))}
+              )}
             </div>
-
-            {pendingReviews.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>No pending reviews</p>
-              </div>
-            )}
           </div>
         </div>
 

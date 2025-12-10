@@ -1,29 +1,62 @@
-import { useState } from 'react';
-import { Mail, Github, Linkedin, Edit2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, Github, Linkedin, Award, Edit2 } from 'lucide-react';
+import { getStudentProfile, updateStudentProfile } from '../utils/api';
 
-// Student Profile Component - View and edit student information
+// Student Profile Component with backend integration
 function StudentProfile({ setCurrentPage, userData }) {
   // State for edit mode
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   // Profile data state
   const [profileData, setProfileData] = useState({
-    name: userData?.name || 'John Doe',
-    email: userData?.email || 'john@college.edu',
-    bio: 'Computer Science student passionate about web development and AI',
-    skills: ['React', 'JavaScript', 'Python', 'Node.js', 'MongoDB'],
-    education: 'B.Tech Computer Science, XYZ College',
-    githubUrl: 'https://github.com/johndoe',
-    linkedinUrl: 'https://linkedin.com/in/johndoe',
+    name: '',
+    email: '',
+    bio: '',
+    skills: [],
+    education: '',
+    githubUrl: '',
+    linkedinUrl: '',
     newSkill: ''
   });
 
-  // Mock completed tasks
-  const completedTasks = [
-    { id: 1, title: 'Build a Todo App', score: 95, date: '2025-11-15' },
-    { id: 2, title: 'API Integration Project', score: 88, date: '2025-11-20' },
-    { id: 3, title: 'Database Design', score: 92, date: '2025-11-25' }
+  // Mock badges
+  const badges = [
+    { id: 1, name: 'First Task Completed', icon: '🎯' },
+    { id: 2, name: 'Team Player', icon: '👥' },
+    { id: 3, name: 'Quick Learner', icon: '⚡' }
   ];
+
+  // Fetch profile on mount
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await getStudentProfile();
+      if (response.success) {
+        setProfileData({
+          name: response.user.name || '',
+          email: response.user.email || '',
+          bio: response.user.bio || '',
+          skills: response.user.skills || [],
+          education: response.user.education || '',
+          githubUrl: response.user.githubUrl || '',
+          linkedinUrl: response.user.linkedinUrl || '',
+          newSkill: ''
+        });
+      }
+    } catch (err) {
+      setError('Failed to load profile');
+      console.error('Profile error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle input change
   const handleChange = (e) => {
@@ -31,6 +64,8 @@ function StudentProfile({ setCurrentPage, userData }) {
       ...profileData,
       [e.target.name]: e.target.value
     });
+    if (error) setError('');
+    if (success) setSuccess('');
   };
 
   // Add new skill
@@ -52,13 +87,38 @@ function StudentProfile({ setCurrentPage, userData }) {
     });
   };
 
-  // Save profile
-  const handleSave = () => {
-    // Here you would send data to backend
-    console.log('Saving profile:', profileData);
-    alert('Profile updated successfully!');
-    setIsEditing(false);
+  // Save profile with API call
+  const handleSave = async () => {
+    setError('');
+    setSuccess('');
+    setIsSaving(true);
+
+    try {
+      const response = await updateStudentProfile(profileData);
+      
+      if (response.success) {
+        setSuccess('Profile updated successfully!');
+        setIsEditing(false);
+        // Update local state with response data
+        setProfileData({
+          ...profileData,
+          ...response.user
+        });
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -69,12 +129,25 @@ function StudentProfile({ setCurrentPage, userData }) {
           <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+            disabled={isSaving}
           >
             <Edit2 size={18} />
             {isEditing ? 'Cancel' : 'Edit Profile'}
           </button>
         </div>
+
+        {/* Success/Error Messages */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+            {success}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 gap-6">
           
@@ -86,7 +159,7 @@ function StudentProfile({ setCurrentPage, userData }) {
               <div className="text-center">
                 {/* Profile initial circle */}
                 <div className="w-24 h-24 mx-auto bg-gray-800 text-white rounded-full flex items-center justify-center text-3xl font-bold mb-4">
-                  {profileData.name.charAt(0)}
+                  {profileData.name.charAt(0).toUpperCase()}
                 </div>
                 
                 {isEditing ? (
@@ -96,6 +169,7 @@ function StudentProfile({ setCurrentPage, userData }) {
                     value={profileData.name}
                     onChange={handleChange}
                     className="text-xl font-bold text-gray-800 w-full text-center border border-gray-300 rounded px-2 py-1"
+                    disabled={isSaving}
                   />
                 ) : (
                   <h2 className="text-xl font-bold text-gray-800">{profileData.name}</h2>
@@ -119,10 +193,11 @@ function StudentProfile({ setCurrentPage, userData }) {
                       onChange={handleChange}
                       className="flex-1 text-sm border border-gray-300 rounded px-2 py-1"
                       placeholder="GitHub URL"
+                      disabled={isSaving}
                     />
                   ) : (
                     <a href={profileData.githubUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-                      GitHub Profile
+                      {profileData.githubUrl ? 'GitHub Profile' : 'Add GitHub'}
                     </a>
                   )}
                 </div>
@@ -137,13 +212,31 @@ function StudentProfile({ setCurrentPage, userData }) {
                       onChange={handleChange}
                       className="flex-1 text-sm border border-gray-300 rounded px-2 py-1"
                       placeholder="LinkedIn URL"
+                      disabled={isSaving}
                     />
                   ) : (
                     <a href={profileData.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-                      LinkedIn Profile
+                      {profileData.linkedinUrl ? 'LinkedIn Profile' : 'Add LinkedIn'}
                     </a>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Badges */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Award className="text-gray-600" size={20} />
+                <h3 className="text-lg font-bold text-gray-800">Badges</h3>
+              </div>
+              
+              <div className="space-y-3">
+                {badges.map(badge => (
+                  <div key={badge.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-2xl">{badge.icon}</span>
+                    <span className="text-sm text-gray-800">{badge.name}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -161,9 +254,11 @@ function StudentProfile({ setCurrentPage, userData }) {
                   onChange={handleChange}
                   rows="4"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-gray-800"
+                  placeholder="Tell us about yourself..."
+                  disabled={isSaving}
                 />
               ) : (
-                <p className="text-gray-600">{profileData.bio}</p>
+                <p className="text-gray-600">{profileData.bio || 'No bio added yet'}</p>
               )}
             </div>
 
@@ -177,9 +272,11 @@ function StudentProfile({ setCurrentPage, userData }) {
                   value={profileData.education}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-gray-800"
+                  placeholder="Your education background"
+                  disabled={isSaving}
                 />
               ) : (
-                <p className="text-gray-600">{profileData.education}</p>
+                <p className="text-gray-600">{profileData.education || 'No education info added'}</p>
               )}
             </div>
 
@@ -194,12 +291,16 @@ function StudentProfile({ setCurrentPage, userData }) {
                       <button
                         onClick={() => handleRemoveSkill(skill)}
                         className="text-red-600 hover:text-red-800"
+                        disabled={isSaving}
                       >
                         ×
                       </button>
                     )}
                   </span>
                 ))}
+                {profileData.skills.length === 0 && !isEditing && (
+                  <span className="text-gray-500 text-sm">No skills added yet</span>
+                )}
               </div>
 
               {isEditing && (
@@ -212,10 +313,12 @@ function StudentProfile({ setCurrentPage, userData }) {
                     onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
                     className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-800"
                     placeholder="Add a skill"
+                    disabled={isSaving}
                   />
                   <button
                     onClick={handleAddSkill}
-                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                    disabled={isSaving}
                   >
                     Add
                   </button>
@@ -223,31 +326,14 @@ function StudentProfile({ setCurrentPage, userData }) {
               )}
             </div>
 
-            {/* Completed Tasks */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Completed Tasks</h3>
-              <div className="space-y-3">
-                {completedTasks.map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-800">{task.title}</p>
-                      <p className="text-sm text-gray-600">{task.date}</p>
-                    </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                      Score: {task.score}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Save Button */}
             {isEditing && (
               <button
                 onClick={handleSave}
-                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSaving}
               >
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             )}
           </div>

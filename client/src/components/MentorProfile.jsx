@@ -1,29 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Briefcase, Building, Edit2 } from 'lucide-react';
+import { getMentorProfile, updateMentorProfile } from '../utils/api';
 
-// Mentor Profile Component - View and edit mentor information
+// Mentor Profile Component with backend integration
 function MentorProfile({ setCurrentPage, userData }) {
   // State for edit mode
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   // Profile data state
   const [profileData, setProfileData] = useState({
-    name: userData?.name || 'Dr. Sarah Johnson',
-    email: userData?.email || 'sarah@company.com',
-    company: 'Tech Corp',
-    role: 'Senior Software Engineer',
-    expertise: ['Web Development', 'Cloud Architecture', 'Node.js', 'React', 'MongoDB'],
-    bio: 'Experienced software engineer with 10+ years in the industry. Passionate about mentoring the next generation of developers.',
-    yearsOfExperience: '10+',
+    name: '',
+    email: '',
+    bio: '',
+    company: '',
+    jobRole: '',
+    expertise: [],
+    yearsOfExperience: '',
     newExpertise: ''
   });
-
-  // Mock tasks created
-  const tasksCreated = [
-    { id: 1, title: 'Build a REST API', teams: 3, completed: 2 },
-    { id: 2, title: 'Frontend Design Challenge', teams: 4, completed: 3 },
-    { id: 3, title: 'Database Optimization', teams: 2, completed: 1 }
-  ];
 
   // Mock mentoring stats
   const mentoringStats = {
@@ -32,12 +30,42 @@ function MentorProfile({ setCurrentPage, userData }) {
     studentsHelped: 32
   };
 
+  // Fetch profile on mount
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await getMentorProfile();
+      if (response.success) {
+        setProfileData({
+          name: response.user.name || '',
+          email: response.user.email || '',
+          bio: response.user.bio || '',
+          company: response.user.company || '',
+          jobRole: response.user.jobRole || '',
+          expertise: response.user.expertise || [],
+          yearsOfExperience: response.user.yearsOfExperience || '',
+          newExpertise: ''
+        });
+      }
+    } catch (err) {
+      setError('Failed to load profile');
+      console.error('Profile error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle input change
   const handleChange = (e) => {
     setProfileData({
       ...profileData,
       [e.target.name]: e.target.value
     });
+    if (error) setError('');
+    if (success) setSuccess('');
   };
 
   // Add new expertise
@@ -59,13 +87,38 @@ function MentorProfile({ setCurrentPage, userData }) {
     });
   };
 
-  // Save profile
-  const handleSave = () => {
-    // Here you would send data to backend
-    console.log('Saving profile:', profileData);
-    alert('Profile updated successfully!');
-    setIsEditing(false);
+  // Save profile with API call
+  const handleSave = async () => {
+    setError('');
+    setSuccess('');
+    setIsSaving(true);
+
+    try {
+      const response = await updateMentorProfile(profileData);
+      
+      if (response.success) {
+        setSuccess('Profile updated successfully!');
+        setIsEditing(false);
+        // Update local state with response data
+        setProfileData({
+          ...profileData,
+          ...response.user
+        });
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -76,12 +129,25 @@ function MentorProfile({ setCurrentPage, userData }) {
           <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+            disabled={isSaving}
           >
             <Edit2 size={18} />
             {isEditing ? 'Cancel' : 'Edit Profile'}
           </button>
         </div>
+
+        {/* Success/Error Messages */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+            {success}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 gap-6">
           
@@ -93,7 +159,7 @@ function MentorProfile({ setCurrentPage, userData }) {
               <div className="text-center">
                 {/* Profile initial circle */}
                 <div className="w-24 h-24 mx-auto bg-gray-800 text-white rounded-full flex items-center justify-center text-3xl font-bold mb-4">
-                  {profileData.name.charAt(0)}
+                  {profileData.name.charAt(0).toUpperCase()}
                 </div>
                 
                 {isEditing ? (
@@ -103,6 +169,7 @@ function MentorProfile({ setCurrentPage, userData }) {
                     value={profileData.name}
                     onChange={handleChange}
                     className="text-xl font-bold text-gray-800 w-full text-center border border-gray-300 rounded px-2 py-1"
+                    disabled={isSaving}
                   />
                 ) : (
                   <h2 className="text-xl font-bold text-gray-800">{profileData.name}</h2>
@@ -126,9 +193,12 @@ function MentorProfile({ setCurrentPage, userData }) {
                       onChange={handleChange}
                       className="flex-1 text-sm border border-gray-300 rounded px-2 py-1"
                       placeholder="Company"
+                      disabled={isSaving}
                     />
                   ) : (
-                    <span className="text-sm text-gray-700">{profileData.company}</span>
+                    <span className="text-sm text-gray-700">
+                      {profileData.company || 'Add Company'}
+                    </span>
                   )}
                 </div>
 
@@ -137,15 +207,38 @@ function MentorProfile({ setCurrentPage, userData }) {
                   {isEditing ? (
                     <input
                       type="text"
-                      name="role"
-                      value={profileData.role}
+                      name="jobRole"
+                      value={profileData.jobRole}
                       onChange={handleChange}
                       className="flex-1 text-sm border border-gray-300 rounded px-2 py-1"
                       placeholder="Role"
+                      disabled={isSaving}
                     />
                   ) : (
-                    <span className="text-sm text-gray-700">{profileData.role}</span>
+                    <span className="text-sm text-gray-700">
+                      {profileData.jobRole || 'Add Job Role'}
+                    </span>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Mentoring Stats */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Mentoring Impact</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <p className="text-2xl font-bold text-gray-800">{mentoringStats.totalTasks}</p>
+                  <p className="text-sm text-gray-600">Tasks Created</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-800">{mentoringStats.teamsmentored}</p>
+                  <p className="text-sm text-gray-600">Teams Mentored</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-800">{mentoringStats.studentsHelped}</p>
+                  <p className="text-sm text-gray-600">Students Helped</p>
                 </div>
               </div>
             </div>
@@ -164,9 +257,11 @@ function MentorProfile({ setCurrentPage, userData }) {
                   onChange={handleChange}
                   rows="4"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-gray-800"
+                  placeholder="Tell us about your experience and expertise..."
+                  disabled={isSaving}
                 />
               ) : (
-                <p className="text-gray-600">{profileData.bio}</p>
+                <p className="text-gray-600">{profileData.bio || 'No bio added yet'}</p>
               )}
             </div>
 
@@ -180,9 +275,13 @@ function MentorProfile({ setCurrentPage, userData }) {
                   value={profileData.yearsOfExperience}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-gray-800"
+                  placeholder="e.g., 10+ years"
+                  disabled={isSaving}
                 />
               ) : (
-                <p className="text-gray-600">{profileData.yearsOfExperience} years</p>
+                <p className="text-gray-600">
+                  {profileData.yearsOfExperience ? `${profileData.yearsOfExperience} years` : 'No experience info added'}
+                </p>
               )}
             </div>
 
@@ -197,12 +296,16 @@ function MentorProfile({ setCurrentPage, userData }) {
                       <button
                         onClick={() => handleRemoveExpertise(item)}
                         className="text-red-600 hover:text-red-800"
+                        disabled={isSaving}
                       >
                         ×
                       </button>
                     )}
                   </span>
                 ))}
+                {profileData.expertise.length === 0 && !isEditing && (
+                  <span className="text-gray-500 text-sm">No expertise areas added yet</span>
+                )}
               </div>
 
               {isEditing && (
@@ -214,11 +317,13 @@ function MentorProfile({ setCurrentPage, userData }) {
                     onChange={handleChange}
                     onKeyPress={(e) => e.key === 'Enter' && handleAddExpertise()}
                     className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-800"
-                    placeholder="Add expertise area"
+                    placeholder="Add expertise area (e.g., Web Development, Cloud Architecture)"
+                    disabled={isSaving}
                   />
                   <button
                     onClick={handleAddExpertise}
-                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                    disabled={isSaving}
                   >
                     Add
                   </button>
@@ -226,30 +331,14 @@ function MentorProfile({ setCurrentPage, userData }) {
               )}
             </div>
 
-            {/* Tasks Created */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Tasks Created</h3>
-              <div className="space-y-3">
-                {tasksCreated.map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-800">{task.title}</p>
-                      <p className="text-sm text-gray-600">
-                        {task.teams} teams • {task.completed} completed
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Save Button */}
             {isEditing && (
               <button
                 onClick={handleSave}
-                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+                className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSaving}
               >
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             )}
           </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
+import { login } from '../utils/api';
 
-// Login component for existing users
+// Login component with backend integration - FIXED VERSION
 function Login({ setCurrentPage, onLogin }) {
   // Form state
   const [formData, setFormData] = useState({
@@ -10,32 +11,40 @@ function Login({ setCurrentPage, onLogin }) {
     role: 'student'
   });
 
+  // Loading and error state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
   // Handle input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    if (error) setError('');
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  // Handle form submission with API call
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
 
-    // Here you would validate with your backend
-    // For now, we'll just simulate a successful login
-    console.log('Login data:', formData);
-
-    // Mock user data
-    const mockUserData = {
-      name: 'Yatharth Singh',
-      email: formData.email,
-      role: formData.role,
-      id: '123456'
-    };
-
-    // Call the login handler from parent
-    onLogin(formData.role, mockUserData);
+    try {
+      // Call the login API
+      const response = await login(formData);
+      
+      if (response.success) {
+        // Call parent handler with user data
+        onLogin(response.user.role, response.user);
+      }
+    } catch (err) {
+      // Handle error
+      setError(err.message || 'Login failed. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -45,6 +54,13 @@ function Login({ setCurrentPage, onLogin }) {
         {/* Header */}
         <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
         <p className="text-gray-600 mb-6">Login to your account</p>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -62,8 +78,9 @@ function Login({ setCurrentPage, onLogin }) {
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
-                placeholder="student@college.edu"
+                placeholder="student@mnnit.ac.in"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -83,6 +100,7 @@ function Login({ setCurrentPage, onLogin }) {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -97,6 +115,7 @@ function Login({ setCurrentPage, onLogin }) {
               value={formData.role}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+              disabled={isLoading}
             >
               <option value="student">Student</option>
               <option value="mentor">Alumni / Mentor</option>
@@ -106,9 +125,10 @@ function Login({ setCurrentPage, onLogin }) {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
+            className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
@@ -118,6 +138,7 @@ function Login({ setCurrentPage, onLogin }) {
           <button
             onClick={() => setCurrentPage('signup')}
             className="text-gray-800 font-medium hover:underline"
+            disabled={isLoading}
           >
             Sign Up
           </button>

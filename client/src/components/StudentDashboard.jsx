@@ -1,39 +1,55 @@
+import { useState, useEffect } from 'react';
 import { BookOpen, Users, Award, Bell } from 'lucide-react';
+import { getStudentDashboard } from '../utils/api';
 
-// Student Dashboard - Main page after login for students
+// Student Dashboard with backend integration
 function StudentDashboard({ setCurrentPage, userData }) {
-  // Mock data for active tasks
-  const activeTasks = [
-    {
-      id: 1,
-      title: 'Build a REST API',
-      mentor: 'Dr. Reena Rai',
-      deadline: '2025-12-15',
-      status: 'In Progress'
+  // State for dashboard data
+  const [dashboardData, setDashboardData] = useState({
+    stats: {
+      tasksCompleted: 0,
+      tasksActive: 0,
+      badgesEarned: 0,
+      teamMembers: 0
     },
-    {
-      id: 2,
-      title: 'Frontend Design Challenge',
-      mentor: 'Rajeev Gupta',
-      deadline: '2025-12-20',
-      status: 'Pending Review'
-    }
-  ];
+    activeTasks: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock data for notifications
+  // Mock notifications (you can add API for this later)
   const notifications = [
     { id: 1, text: 'New task available: Mobile App Development', time: '2 hours ago' },
-    { id: 2, text: 'Your submission for REST API was reviewed', time: '5 hours ago' },
+    { id: 2, text: 'Your submission was reviewed', time: '5 hours ago' },
     { id: 3, text: 'Team meeting scheduled for tomorrow', time: '1 day ago' }
   ];
 
-  // Mock statistics
-  const stats = {
-    tasksCompleted: 5,
-    tasksActive: 2,
-    // badgesEarned: 3,
-    teamMembers: 4
+  // Fetch dashboard data on component mount
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const response = await getStudentDashboard();
+      if (response.success) {
+        setDashboardData(response);
+      }
+    } catch (err) {
+      setError('Failed to load dashboard');
+      console.error('Dashboard error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -47,16 +63,23 @@ function StudentDashboard({ setCurrentPage, userData }) {
           <p className="text-gray-600 mt-2">Here's what's happening with your projects</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Completed Tasks</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.tasksCompleted}</p>
+                <p className="text-3xl font-bold text-gray-800">{dashboardData.stats.tasksCompleted}</p>
               </div>
-              {/* <BookOpen className="text-gray-400" size={32} /> */}
+              <BookOpen className="text-gray-400" size={32} />
             </div>
           </div>
 
@@ -64,9 +87,19 @@ function StudentDashboard({ setCurrentPage, userData }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Active Tasks</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.tasksActive}</p>
+                <p className="text-3xl font-bold text-gray-800">{dashboardData.stats.tasksActive}</p>
               </div>
-              {/* <BookOpen className="text-gray-400" size={32} /> */}
+              <BookOpen className="text-gray-400" size={32} />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Badges Earned</p>
+                <p className="text-3xl font-bold text-gray-800">{dashboardData.stats.badgesEarned}</p>
+              </div>
+              <Award className="text-gray-400" size={32} />
             </div>
           </div>
 
@@ -74,9 +107,9 @@ function StudentDashboard({ setCurrentPage, userData }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Team Members</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.teamMembers}</p>
+                <p className="text-3xl font-bold text-gray-800">{dashboardData.stats.teamMembers || 0}</p>
               </div>
-              {/* <Users className="text-gray-400" size={32} /> */}
+              <Users className="text-gray-400" size={32} />
             </div>
           </div>
         </div>
@@ -97,43 +130,51 @@ function StudentDashboard({ setCurrentPage, userData }) {
               </div>
 
               <div className="space-y-4">
-                {activeTasks.map(task => (
-                  <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 cursor-pointer">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800">{task.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">Mentor: {task.mentor}</p>
-                        <p className="text-sm text-gray-500 mt-1">Deadline: {task.deadline}</p>
+                {dashboardData.activeTasks && dashboardData.activeTasks.length > 0 ? (
+                  dashboardData.activeTasks.map(submission => (
+                    <div key={submission._id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 cursor-pointer">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-800">
+                            {submission.taskId?.title || 'Task'}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Status: {submission.status}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Applied: {new Date(submission.appliedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          submission.status === 'submitted' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : submission.status === 'reviewed'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {submission.status}
+                        </span>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        task.status === 'In Progress' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {task.status}
-                      </span>
+                      <button 
+                        onClick={() => setCurrentPage('task-submission')}
+                        className="mt-3 text-sm text-gray-800 hover:underline"
+                      >
+                        View Details →
+                      </button>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No active tasks</p>
                     <button 
-                      onClick={() => setCurrentPage('task-submission')}
-                      className="mt-3 text-sm text-gray-800 hover:underline"
+                      onClick={() => setCurrentPage('browse-tasks')}
+                      className="mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
                     >
-                      View Details →
+                      Browse Tasks
                     </button>
                   </div>
-                ))}
+                )}
               </div>
-
-              {activeTasks.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <p>No active tasks</p>
-                  <button 
-                    onClick={() => setCurrentPage('browse-tasks')}
-                    className="mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
-                  >
-                    Browse Tasks
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 

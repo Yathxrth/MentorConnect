@@ -1,83 +1,72 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Calendar, Tag } from 'lucide-react';
+import { getAllTasks, applyToTask } from '../utils/api';
 
-// Browse Tasks Component - View and apply to available tasks
+// Browse Tasks Component with backend integration
 function BrowseTasks({ setCurrentPage }) {
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [tasks, setTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [applyingTask, setApplyingTask] = useState(null);
 
-  // Mock tasks data
-  const allTasks = [
-    {
-      id: 1,
-      title: 'Build a REST API with Node.js',
-      description: 'Create a RESTful API for a blog platform with CRUD operations',
-      mentor: 'Dr. Reena Rai',
-      company: 'Google',
-      // difficulty: 'Medium',
-      deadline: '2025-12-20',
-      tags: ['Node.js', 'Express', 'MongoDB'],
-      // applicants: 5
-    },
-    {
-      id: 2,
-      title: 'Frontend Design Challenge',
-      description: 'Design and build a responsive landing page for a startup',
-      mentor: 'Rajeev Gupta',
-      company: 'Design Studio',
-      // difficulty: 'Easy',
-      deadline: '2025-12-15',
-      tags: ['React', 'CSS', 'Tailwind'],
-      // applicants: 8
-    },
-    {
-      id: 3,
-      title: 'Machine Learning Image Classifier',
-      description: 'Build an image classification model using TensorFlow',
-      mentor: 'Prof. Manish Tripathi',
-      company: 'Microprocessor Research Lab',
-      // difficulty: 'Hard',
-      deadline: '2026-01-05',
-      tags: ['Python', 'TensorFlow', 'ML'],
-      // applicants: 3
-    },
-    {
-      id: 4,
-      title: 'Mobile App Development',
-      description: 'Create a cross-platform mobile app for task management',
-      mentor: 'Anand Sharma',
-      company: 'EMT Inc',
-      // difficulty: 'Medium',
-      deadline: '2025-12-30',
-      tags: ['React Native', 'JavaScript', 'Firebase'],
-      // applicants: 6
-    },
-    {
-      id: 5,
-      title: 'Database Optimization Project',
-      description: 'Optimize queries and improve database performance',
-      mentor: 'Vishal Gaur',
-      company: 'Network System',
-      // difficulty: 'Hard',
-      deadline: '2026-01-10',
-      tags: ['SQL', 'PostgreSQL', 'Performance'],
-      // applicants: 2
+  // Fetch tasks on mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await getAllTasks();
+      if (response.success) {
+        setTasks(response.tasks);
+      }
+    } catch (err) {
+      setError('Failed to load tasks');
+      console.error('Tasks error:', err);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
-  // Filter tasks based on search
-  const filteredTasks = allTasks.filter(task => {
+  // Filter tasks based on search and difficulty
+  const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const matchesDifficulty = selectedDifficulty === 'all' || task.difficulty === selectedDifficulty;
+    return matchesSearch && matchesDifficulty;
   });
 
-  // Handle apply to task
-  const handleApply = (taskId) => {
-    // Here you would send application to backend
-    console.log('Applying to task:', taskId);
-    alert('Application submitted! The mentor will review your request.');
+  // Handle apply to task with API call
+  const handleApply = async (taskId) => {
+    setApplyingTask(taskId);
+    setError('');
+
+    try {
+      const response = await applyToTask(taskId);
+      
+      if (response.success) {
+        alert('Application submitted! The mentor will review your request.');
+        // Refresh tasks to update applicant count
+        fetchTasks();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to apply to task');
+      alert(err.message || 'Failed to apply to task');
+    } finally {
+      setApplyingTask(null);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading tasks...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -89,24 +78,47 @@ function BrowseTasks({ setCurrentPage }) {
           <p className="text-gray-600">Find and apply to tasks that match your skills</p>
         </div>
 
-        {/* Search Bar */}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
+        {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search tasks..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
-            />
+          <div className="grid md:grid-cols-2 gap-4">
+            
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+              />
+            </div>
+
+            {/* Difficulty Filter */}
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-800"
+            >
+              <option value="all">All Difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
           </div>
         </div>
 
         {/* Tasks List */}
         <div className="space-y-4">
           {filteredTasks.map(task => (
-            <div key={task.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div key={task._id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
               
               {/* Task Header */}
               <div className="flex items-start justify-between mb-4">
@@ -116,15 +128,26 @@ function BrowseTasks({ setCurrentPage }) {
                   
                   {/* Mentor Info */}
                   <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>{task.mentor}</span>
-                    <span>{task.company}</span>
+                    <span>👨‍🏫 {task.mentorId?.name || 'Mentor'}</span>
+                    <span>🏢 {task.mentorId?.company || 'Company'}</span>
                   </div>
                 </div>
+
+                {/* Difficulty Badge */}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  task.difficulty === 'Easy' 
+                    ? 'bg-green-100 text-green-800' 
+                    : task.difficulty === 'Medium'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {task.difficulty}
+                </span>
               </div>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {task.tags.map((tag, index) => (
+                {task.tags && task.tags.map((tag, index) => (
                   <span key={index} className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                     <Tag size={14} />
                     {tag}
@@ -137,16 +160,17 @@ function BrowseTasks({ setCurrentPage }) {
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <span className="flex items-center gap-1">
                     <Calendar size={16} />
-                    Deadline: {task.deadline}
+                    Deadline: {new Date(task.deadline).toLocaleDateString()}
                   </span>
-                  {/* <span>{task.applicants} teams applied</span>/ */}
+                  <span>{task.applicants || 0} teams applied</span>
                 </div>
 
                 <button
-                  onClick={() => handleApply(task.id)}
-                  className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                  onClick={() => handleApply(task._id)}
+                  className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={applyingTask === task._id}
                 >
-                  Apply
+                  {applyingTask === task._id ? 'Applying...' : 'Apply'}
                 </button>
               </div>
             </div>

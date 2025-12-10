@@ -1,10 +1,27 @@
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { logout } from '../utils/api';
 
 // Navigation bar component that shows different options based on login status
 function Navbar({ isLoggedIn, userRole, setCurrentPage, onLogout }) {
   // State to handle mobile menu toggle
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Handle logout with API call
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      onLogout(); // Call parent's logout handler
+    } catch (err) {
+      console.error('Logout error:', err);
+      // Still logout on frontend even if API fails
+      onLogout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
@@ -79,11 +96,12 @@ function Navbar({ isLoggedIn, userRole, setCurrentPage, onLogout }) {
 
                 {/* Logout Button */}
                 <button 
-                  onClick={onLogout}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                  disabled={isLoggingOut}
                 >
                   <LogOut size={18} />
-                  Logout
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </button>
               </>
             ) : (
@@ -194,12 +212,13 @@ function Navbar({ isLoggedIn, userRole, setCurrentPage, onLogout }) {
                 
                 <button 
                   onClick={() => {
-                    onLogout();
+                    handleLogout();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-left px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 mx-4"
+                  className="text-left px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 mx-4 disabled:opacity-50"
+                  disabled={isLoggingOut}
                 >
-                  Logout
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </button>
               </div>
             ) : (

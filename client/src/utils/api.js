@@ -49,6 +49,11 @@ export const logout = async () => {
   return apiCall('/logout');
 };
 
+// Verify if user is still logged in (for page reload)
+export const verifyToken = async () => {
+  return apiCall('/verify-token');
+};
+
 // ========== STUDENT APIs ==========
 
 export const getStudentProfile = async () => {
@@ -137,5 +142,16 @@ export const evaluateSubmission = async (submissionId, evaluationData) => {
   return apiCall(`/mentor/evaluate/${submissionId}`, {
     method: 'POST',
     body: JSON.stringify(evaluationData),
+  });
+};
+
+export const getMentorProfile = async () => {
+  return apiCall('/mentor/profile');
+};
+
+export const updateMentorProfile = async (profileData) => {
+  return apiCall('/mentor/profile/update', {
+    method: 'POST',
+    body: JSON.stringify(profileData),
   });
 };

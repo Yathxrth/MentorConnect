@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X } from 'lucide-react';
+import { verifyToken } from './utils/api';
 
 // Import all components
 import Navbar from './components/Navbar';
@@ -14,6 +15,7 @@ import TeamManagement from './components/TeamManagement';
 import TaskSubmission from './components/TaskSubmission';
 import MentorTaskCreate from './components/MentorTaskCreate';
 import MentorEvaluation from './components/MentorEvaluation';
+import TaskChat from './components/TaskChat';
 
 function App() {
   // State to track which page to show
@@ -23,6 +25,36 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(''); // 'student' or 'mentor'
   const [userData, setUserData] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check if user is already logged in on component mount (page reload)
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await verifyToken();
+      if (response.success) {
+        // User is logged in, restore session
+        setIsLoggedIn(true);
+        setUserRole(response.user.role);
+        setUserData(response.user);
+        
+        // Navigate to appropriate dashboard
+        if (response.user.role === 'student') {
+          setCurrentPage('student-dashboard');
+        } else {
+          setCurrentPage('mentor-dashboard');
+        }
+      }
+    } catch (err) {
+      // User is not logged in or token expired
+      console.log('No active session');
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
 
   // Handle successful login
   const handleLogin = (role, data) => {
@@ -78,6 +110,18 @@ function App() {
     }
   };
 
+  // Show loading screen while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Bar */}
@@ -88,6 +132,12 @@ function App() {
         onLogout={handleLogout}
       />
       
+      {isLoggedIn && (
+      <div className="fixed bottom-4 right-4 w-80 z-50">
+        <TaskChat taskId="global" userData={userData} />
+      </div>
+    )}
+
       {/* Main Content */}
       <div className="pt-16">
         {renderPage()}
